@@ -361,11 +361,11 @@ public class Game extends JPanel {
 	}
 	
 	private Image draw() {
-		BufferedImage buffImg = new BufferedImage(SCREEN_WIDTH, SCREEN_HEIGHT, BufferedImage.TYPE_INT_RGB);
+		BufferedImage buffImg = new BufferedImage(m_levelWidth, SCREEN_HEIGHT, BufferedImage.TYPE_INT_RGB);
 		Graphics g = buffImg.getGraphics();
 		
 		g.setColor(Color.BLACK);
-		g.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+		g.fillRect(0, 0, m_levelWidth, SCREEN_HEIGHT);
 		
 		// draw player
 	    int x1 = m_player.getX();
@@ -375,20 +375,21 @@ public class Game extends JPanel {
 	    
 	    int playerX = x1;
 	    
-	    g.setColor(Color.GREEN);
-	    int player_imgX;
-	    if (playerX < SCREEN_WIDTH)
-	    	player_imgX = playerX;
-	    else
-	    	player_imgX = playerX - SCREEN_WIDTH; 
-	    g.fillRect(player_imgX, y1, PLAYER_WIDTH, PLAYER_HEIGHT);
-	    
 	    if (playerX <= SCREEN_WIDTH / 2)
 	    	;
 	    else if (playerX >= m_levelWidth - SCREEN_WIDTH / 2)
 	    	m_camX = m_levelWidth - SCREEN_WIDTH;
 	    else
 	    	m_camX = playerX - SCREEN_WIDTH / 2;
+	    g.translate(-m_camX, 0);
+	    
+	    g.setColor(Color.GREEN);
+//	    int player_imgX;
+//	    if (playerX < SCREEN_WIDTH)
+//	    	player_imgX = playerX;
+//	    else
+//	    	player_imgX = playerX - SCREEN_WIDTH; 
+	    g.fillRect(playerX, y1, PLAYER_WIDTH, PLAYER_HEIGHT);
 	    
 	    for (StationaryObject so : m_stationaryobjects) {
 	    	int width = so.getWidth() * TILE_WIDTH;
