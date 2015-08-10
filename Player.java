@@ -25,8 +25,7 @@ public class Player extends MovingObject {
 
 	    if (insideEnemy[0])
 	    {
-	        //game.reset();
-	        game.setReset(true);
+	        game.reset();
 	        return;
 	    }
 

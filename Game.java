@@ -35,8 +35,7 @@ enum MyKeys {
 	}
 }
 
-/** TODO: parseMapFile() implement
-         draw() implement
+/** TODO: draw() camera fix
 **/
 
 public class Game extends JPanel {
@@ -71,7 +70,7 @@ public class Game extends JPanel {
 		JFrame window = new JFrame("TilePlatformerJava");
 		Game content = new Game(args[0]);
 		window.setContentPane(content);
-		window.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+		window.setSize(SCREEN_WIDTH, SCREEN_HEIGHT + 25);
 		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 		window.setLocation((screenSize.width - SCREEN_WIDTH) / 2, 
 				           (screenSize.height - SCREEN_HEIGHT) / 2);
@@ -153,64 +152,56 @@ public class Game extends JPanel {
 	    
 	    m_levelWidth = a + TILE_WIDTH;
 	    m_numCols = m_levelWidth / TILE_WIDTH;
+	    
+	    m_key = new boolean[4];
+	    for (int k = 0; k < 4; k++)
+	    	m_key[k] = false;
 		
 		setBackground(Color.BLACK);
 		
 		ActionListener action = new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				//while (!m_doexit) {
-					if (m_doexit)
-						System.exit(0);
+				if (m_doexit)
+					System.exit(0);
+			
+				if (!m_gameStarted || m_gameOver || m_pause)
+					m_redraw = false;
+				else {
+					m_redraw = true;
+					getInput();
+					
+					if (m_reset) {
+						m_gameOver = true;
+						m_reset = false;
+						m_redraw = false;
+					}
+				}
 				
-					if (!m_gameStarted || m_gameOver || m_pause)
-						m_redraw = false;
-					else {
-						m_redraw = true;
-						getInput();
-						
-						if (m_reset) {
-							m_gameOver = true;
-							m_reset = false;
-							m_redraw = false;
-						}
-					}
-					
-					if (m_gameStarted && !m_gameOver && !m_pause && m_redraw) {
-						//repaint();
-						m_redraw = false;
-					}
-					//else if (!m_gameStarted)
-					//	repaint(); // draw start screen
-					//else if (m_gameOver)
-					//	repaint(); // draw game over screen
-					
-					repaint();
-				//}
+				if (m_gameStarted && !m_gameOver && !m_pause && m_redraw)
+					m_redraw = false;
+				
+				repaint();
 			}
 		};
-		m_timer = new Timer(FPS, action);
+		m_timer = new Timer(1000 / FPS, action);
 		
-		addMouseListener(new MouseAdapter() {
-	        public void mousePressed(MouseEvent evt) {
-	            requestFocus();
-	        }
-		});
-		
-	    addFocusListener(new FocusListener() {
-	        public void focusGained(FocusEvent evt) {
-	            m_timer.start();
-	            m_pause = false;
-	            repaint();
-	        }
-	        public void focusLost(FocusEvent evt) {
-	            m_timer.stop();
-	            //m_pause = true;
-	        }
-	    });
-	    
-	    m_key = new boolean[4];
-	    for (int k = 0; k < 4; k++)
-	    	m_key[k] = false;
+//		addMouseListener(new MouseAdapter() {
+//	        public void mousePressed(MouseEvent evt) {
+//	            requestFocus();
+//	        }
+//		});
+//		
+//	    addFocusListener(new FocusListener() {
+//	        public void focusGained(FocusEvent evt) {
+//	            m_timer.start();
+//	            //m_pause = false;
+//	            repaint();
+//	        }
+//	        public void focusLost(FocusEvent evt) {
+//	            m_timer.stop();
+//	            //m_pause = true;
+//	        }
+//	    });
 	    
 	    addKeyListener(new KeyAdapter() {
 	    	public void keyPressed(KeyEvent evt) {
@@ -262,6 +253,37 @@ public class Game extends JPanel {
 	    		}
 	    	}
 	    });
+	    
+	    setFocusable(true);
+	    
+		m_timer.start();
+	}
+	
+	public void reset() {
+		m_reset = true;
+		
+		m_player = null;
+		
+		m_camX = 0;
+		
+		for (StationaryObject so : m_stationaryobjects) {
+			so.Dispose();
+		}
+		m_stationaryobjects.clear();
+		
+		m_movingobjects.clear();
+		
+		m_stationaryCount = 0;
+		m_movingCount = 0;
+		
+		for (int r = 0; r < NUM_ROWS; r++)
+	    {
+	        m_map[r] = new GameObject[m_numCols];
+	        for (int c = 0; c < m_numCols; c++)
+	            m_map[r][c] = null;
+	    }
+
+	    parseMapFile();
 	}
 	
 	public boolean getKey(MyKeys key) {
@@ -381,11 +403,11 @@ public class Game extends JPanel {
 	            switch (tile) {
 	            case 'w':
 	            	g.setColor(Color.RED);
-	        		g.fillRect(0, 0, TILE_WIDTH, TILE_HEIGHT);
+	        		g.fillRect(x1, y1, width, height);
 	                break;
 	            case 's':
 	            	g.setColor(Color.YELLOW);
-	        		g.fillRect(0, 0, TILE_WIDTH, TILE_HEIGHT);
+	        		g.fillRect(x1, y1, width, height);
 	                break;
 	            }
 	        }
