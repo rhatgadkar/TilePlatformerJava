@@ -447,25 +447,20 @@ public class Game extends JPanel {
 			while ( (line = br.readLine()) != null ) {
 				char tile = '-';
 				int row = -1, col = -1, width = -1, height = -1;
-				int num = -1;
 				
 				Pattern p = Pattern.compile(REGEX);
 				String[] vars = p.split(line);
-				for (String s : vars) {
-					if (tile == '-')
-						tile = s.charAt(0);
-					else if (row == -1)
-						row = Integer.parseInt(s);
-					else if (col == -1)
-						col = Integer.parseInt(s);
-					else if (width == -1)
-						width = Integer.parseInt(s);
-					else if (height == -1)
-						height = Integer.parseInt(s);
-					else if (num == -1)
-						num = Integer.parseInt(s);
-					else
-						break;
+				
+				try {
+					tile = vars[0].charAt(0);
+					row = Integer.parseInt(vars[1]);
+					col = Integer.parseInt(vars[2]);
+					width = Integer.parseInt(vars[3]);
+					height = Integer.parseInt(vars[4]);
+				}
+				catch (Exception ex) {
+					System.out.println("Map file error:\nInvalid line at line: " + lineNum);
+	                System.exit(0);
 				}
 				
 				// create the gameobject
