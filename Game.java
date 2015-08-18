@@ -5,18 +5,15 @@ import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.LinkedList;
+import java.util.regex.Pattern;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -35,10 +32,9 @@ enum MyKeys {
 	}
 }
 
-/** TODO: draw() camera fix
-**/
-
 public class Game extends JPanel {
+
+	private static final long serialVersionUID = 1L;
 	
 	public final static int SCREEN_WIDTH = 640;
 	public final static int SCREEN_HEIGHT = 480;
@@ -384,11 +380,6 @@ public class Game extends JPanel {
 	    g.translate(-m_camX, 0);
 	    
 	    g.setColor(Color.GREEN);
-//	    int player_imgX;
-//	    if (playerX < SCREEN_WIDTH)
-//	    	player_imgX = playerX;
-//	    else
-//	    	player_imgX = playerX - SCREEN_WIDTH; 
 	    g.fillRect(playerX, y1, PLAYER_WIDTH, PLAYER_HEIGHT);
 	    
 	    for (StationaryObject so : m_stationaryobjects) {
@@ -397,7 +388,6 @@ public class Game extends JPanel {
 	        x1 = so.getX();
 	        int x2 = x1 + width;
 	        y1 = so.getY();
-	        int y2 = y1 + height;
 
 	        if (x2 >= m_camX || x1 >= m_camX) {
 	            char tile = so.getTile();
@@ -452,86 +442,36 @@ public class Game extends JPanel {
 			
 			int lineNum = 1;
 			String line;
-			int commaCount = 0;
+			final String REGEX = ",";
+			
 			while ( (line = br.readLine()) != null ) {
 				char tile = '-';
 				int row = -1, col = -1, width = -1, height = -1;
 				int num = -1;
 				
-				for (int k = 0; k < line.length(); k++) {
-					char currentChar = line.charAt(k);
-					
-					if (currentChar == ',')
-						commaCount++;
-					else if (Character.isDigit(currentChar)) {
-						if (num != -1) 
-							num = (num * 10) + Character.getNumericValue(currentChar);
-						else
-							num = Character.getNumericValue(currentChar);
-						
-						continue;
-					}
-					
-					if (k == 0) {
-						tile = currentChar;
-						if (tile != 'w' && tile != 'p' && tile != 's' && tile != 'm') {
-							System.out.println("Map file error:\nInvalid tile char: '" + tile + "' at line: " + lineNum);
-							System.exit(0);
-						}
-					}
-					else {
-						switch (commaCount)
-		                {
-		                case 1:
-		                    break;
-		                case 2: // row
-		                    row = num;
-		                    num = -1;
-		                    if (row < 0 || row >= NUM_ROWS)
-		                    {
-		                        System.out.println("Map file error:\nInvalid row: '" + row + "' at line: " + lineNum);
-		                        System.exit(0);
-		                    }
-		                    break;
-		                case 3: // col
-		                    col = num;
-		                    num = -1;
-		                    if (col < 0 || col >= MAX_NUM_COLS)
-		                    {
-		                        System.out.println("Map file error:\nInvalid col: '" + col + "' at line: " + lineNum);
-		                        System.exit(0);
-		                    }
-		                    break;
-		                case 4: // width
-		                    width = num;
-		                    num = -1;
-		                    if (width < 1 || width > MAX_NUM_COLS)
-		                    {
-		                        System.out.println("Map file error:\nInvalid width: '" + width + "' at line: " + lineNum);
-		                        System.exit(0);
-		                    }
-		                    break;
-		                case 5: // height
-		                    height = num;
-		                    num = -1;
-		                    if (height < 1 || height > NUM_ROWS)
-		                    {
-		                        System.out.println("Map file error:\nInvalid height: '" + height + "' at line: " + lineNum);
-		                        System.exit(0);
-		                    }
-		                    break;
-		                default:
-		                    System.out.println("Map file error:\nExtra parameters at line: " + lineNum);
-		                    System.exit(0);
-		                }
-					}
+				Pattern p = Pattern.compile(REGEX);
+				String[] vars = p.split(line);
+				for (String s : vars) {
+					if (tile == '-')
+						tile = s.charAt(0);
+					else if (row == -1)
+						row = Integer.parseInt(s);
+					else if (col == -1)
+						col = Integer.parseInt(s);
+					else if (width == -1)
+						width = Integer.parseInt(s);
+					else if (height == -1)
+						height = Integer.parseInt(s);
+					else if (num == -1)
+						num = Integer.parseInt(s);
+					else
+						break;
 				}
 				
 				// create the gameobject
 				switch (tile) {
 				case 'w':
 		            addNewStationaryObject(new Wall(row, col, width, height, this, lineNum));
-					//m_stationaryobjects.add(new Wall(row, col, width, height, this, lineNum));
 		            break;
 		        case 'p':
 		        {
@@ -546,10 +486,12 @@ public class Game extends JPanel {
 		        }
 		        case 's':
 		            addNewStationaryObject(new StationaryEnemy(row, col, width, height, this, lineNum));
-		        	//m_stationaryobjects.add(new StationaryEnemy(row, col, width, height, this, lineNum));
 		            break;
 		        case 'm':
 		            break;
+		        default:
+		        	System.out.println("Map file error:\nNot a valid tile char at line: " + lineNum);
+	                System.exit(0);
 				}
 				
 				if (tile == 'w' || tile == 's') {
@@ -560,7 +502,6 @@ public class Game extends JPanel {
 				}
 				
 				lineNum++;
-				commaCount = 0;
 			}
 			
 			if (m_player == null) {

@@ -148,9 +148,9 @@ public class Player extends MovingObject {
 	            int gx_start = go.getX();
 	            int g_width = go.getWidth();
 	            int g_height = go.getHeight();
-	            int gx_end = gx_start + game.TILE_WIDTH * g_width;
+	            int gx_end = gx_start + Game.TILE_WIDTH * g_width;
 	            int gy_start = go.getY();
-	            int gy_end = gy_start + game.TILE_HEIGHT * g_height;
+	            int gy_end = gy_start + Game.TILE_HEIGHT * g_height;
 
 	            if (gx_start == lastSelectedX && gy_start == lastSelectedY)
 	                continue;
