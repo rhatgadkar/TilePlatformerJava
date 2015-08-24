@@ -2,8 +2,8 @@ public class Player extends MovingObject {
 	
 	private final int MAX_JUMP_COUNT = 50;
 
-	public Player(int r, int c, int w, int h, Game g, int line) {
-		super(r, c, 'p', w, h, g, line);
+	public Player(int r, int c, int w, int h, World world, int line) {
+		super(r, c, 'p', w, h, world, line);
 		
 		m_jumpCount = MAX_JUMP_COUNT;
 		m_fallDown = false;
@@ -12,7 +12,7 @@ public class Player extends MovingObject {
 
 	@Override
 	public void doSomething() {
-		Game game = getGame();
+		World world = getWorld();
 	    int x = getX();
 	    int y = getY();
 
@@ -21,15 +21,15 @@ public class Player extends MovingObject {
 	    boolean[] insideTop = {false}; 
 	    boolean[] insideDown = {false}; 
 	    boolean[] insideEnemy = {false};
-	    checkBounds(game, x, y, insideLeft, insideRight, insideTop, insideDown, insideEnemy);
+	    checkBounds(world, x, y, insideLeft, insideRight, insideTop, insideDown, insideEnemy);
 
 	    if (insideEnemy[0])
 	    {
-	        game.reset();
+	        world.gameOver();
 	        return;
 	    }
 
-	    movePlayer(game, insideLeft[0], insideRight[0], insideTop[0], insideDown[0]);
+	    movePlayer(world, insideLeft[0], insideRight[0], insideTop[0], insideDown[0]);
 	}
 
 	@Override
@@ -39,15 +39,15 @@ public class Player extends MovingObject {
 	private boolean m_fallDown;
 	private boolean m_canJump;
 	
-	private void movePlayer(Game game, boolean insideLeftTile, 
+	private void movePlayer(World world, boolean insideLeftTile, 
 			boolean insideRightTile, boolean insideUpTile, boolean insideDownTile) {
-		if (game.getKey(MyKeys.KEY_LEFT))
+		if (world.getKey(MyKeys.KEY_LEFT))
 	    {
 	        if (!insideLeftTile)
 	            moveLeft();
 	    }
 
-	    if (game.getKey(MyKeys.KEY_RIGHT))
+	    if (world.getKey(MyKeys.KEY_RIGHT))
 	    {
 	        if (!insideRightTile)
 	            moveRight();
@@ -65,7 +65,7 @@ public class Player extends MovingObject {
 	        m_fallDown = false;
 	    }
 
-	    if (game.getKey(MyKeys.KEY_UP))
+	    if (world.getKey(MyKeys.KEY_UP))
 	    {
 	        if (insideUpTile && !insideDownTile)
 	        {
@@ -107,7 +107,7 @@ public class Player extends MovingObject {
 	    }
 	}
 	
-	private void checkBounds(Game game, int pX, int pY, boolean[] insideLeft, boolean[] insideRight, 
+	private void checkBounds(World world, int pX, int pY, boolean[] insideLeft, boolean[] insideRight, 
 			boolean[] insideTop, boolean[] insideDown, boolean[] insideStationaryEnemy) {
 		int px_start = pX;
 	    int px_end = pX + Game.PLAYER_WIDTH;
@@ -135,9 +135,9 @@ public class Player extends MovingObject {
 
 	    for (int k = 0; k < 9; k++)
 	    {
-	        if (game.validRow(tileRows[k]) && game.validCol(tileCols[k]))
+	        if (world.validRow(tileRows[k]) && world.validCol(tileCols[k]))
 	        {
-	            GameObject go = game.getMap(tileRows[k], tileCols[k]);
+	            GameObject go = world.getMap(tileRows[k], tileCols[k]);
 	            if (go == null)
 	                continue;
 
@@ -167,19 +167,19 @@ public class Player extends MovingObject {
 	                
 	                int leftCol = tileCols[k] - 1;
 	                int rightCol = tileCols[k] + 1;
-	                GameObject go_leftCol = game.getMap(tileRows[k], leftCol);
-	                GameObject go_rightCol = game.getMap(tileRows[k], rightCol);
+	                GameObject go_leftCol = world.getMap(tileRows[k], leftCol);
+	                GameObject go_rightCol = world.getMap(tileRows[k], rightCol);
 
 	                if (px_end == gx_start)
 	                {
-	                    if (game.validCol(leftCol) && go_leftCol != null && go_leftCol.getTile() == 'w')
+	                    if (world.validCol(leftCol) && go_leftCol != null && go_leftCol.getTile() == 'w')
 	                        ;
 	                    else
 	                        insideRight[0] = true;
 	                }
 	                else if (px_start == gx_end)
 	                {
-	                    if (game.validCol(rightCol) && go_rightCol != null && go_rightCol.getTile() == 'w')
+	                    if (world.validCol(rightCol) && go_rightCol != null && go_rightCol.getTile() == 'w')
 	                        ;
 	                    else
 	                        insideLeft[0] = true;

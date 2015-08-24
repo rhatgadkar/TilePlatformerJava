@@ -1,7 +1,7 @@
 public abstract class StationaryObject extends GameObject {
 
-	public StationaryObject(int r, int c, char tile, int w, int h, Game g, int line) {
-		super(r, c, tile, w, h, g, line);
+	public StationaryObject(int r, int c, char tile, int w, int h, World world, int line) {
+		super(r, c, tile, w, h, world, line);
 		
 		if (tile != 'w' && tile != 's')
 	    {
@@ -11,14 +11,14 @@ public abstract class StationaryObject extends GameObject {
 	}
 	
 	public void Dispose() {
-		Game game = getGame();
+		World world = getWorld();
 		int h = getHeight();
 		int w = getWidth();
 		
 		for (int rCount = m_row; rCount < m_row + h; rCount++)
 	    {
 	        for (int cCount = m_col; cCount < m_col + w; cCount++)
-	            game.setMap(rCount, cCount, null);
+	            world.setMap(rCount, cCount, null);
 	    }
 	}
 }

@@ -1,5 +1,5 @@
 public abstract class GameObject {
-	private Game m_game;
+	private World m_world;
 	private char m_tile;
 	private int m_pos;
 	private int m_width;
@@ -10,8 +10,8 @@ public abstract class GameObject {
 	protected int m_row;
 	protected int m_col;
 	
-	public GameObject(int r, int c, char tile, int w, int h, Game g, int line) {
-		m_game = g;
+	public GameObject(int r, int c, char tile, int w, int h, World world, int line) {
+		m_world = world;
 		m_tile = tile;
 		m_width = w;
 		m_height = h;
@@ -26,15 +26,15 @@ public abstract class GameObject {
 			System.out.println("Invalid tile char: '" + tile + "' at line: " + line);
 			System.exit(0);
 		}
-		if (!g.validRow(r)) {
+		if (!m_world.validRow(r)) {
 			System.out.println("Invalid row: '" + r + "' at line: " + line);
 			System.exit(0);
 		}
-		if (c < 0 || c >= g.getNumCols()) {
+		if (c < 0 || c >= m_world.getNumCols()) {
 			System.out.println("Invalid col: '" + c + "' at line: " + line);
 			System.exit(0);
 		}
-		if (w < 1 || w > g.getNumCols()) {
+		if (w < 1 || w > m_world.getNumCols()) {
 			System.out.println("Invalid width: '" + w + "' at line: " + line);
 			System.exit(0);
 		}
@@ -45,7 +45,7 @@ public abstract class GameObject {
 		
 		for (int rCount = r; rCount < r + h; rCount++) {
 			for (int cCount = c; cCount < c + w; cCount++) {
-				GameObject curr = g.getMap(rCount, cCount);
+				GameObject curr = m_world.getMap(rCount, cCount);
 				if (curr != null) {
 					System.out.println("Cannot add GameObject: '" + tile + 
 									   "', This tile exists here: '" + 
@@ -53,15 +53,15 @@ public abstract class GameObject {
 					System.exit(0);
 				}
 				
-				g.setMap(rCount, cCount, this);
+				m_world.setMap(rCount, cCount, this);
 			}
 		}
 	}
 	
 	public abstract void doSomething();
 	
-	public final Game getGame() {
-		return m_game;
+	public final World getWorld() {
+		return m_world;
 	}
 	
 	public final char getTile() {

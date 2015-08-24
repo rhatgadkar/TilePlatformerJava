@@ -8,12 +8,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.LinkedList;
-import java.util.regex.Pattern;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -74,8 +69,6 @@ public class Game extends JPanel {
         window.setResizable(false);
         window.setVisible(true);
 	}
-
-	private String m_mapFile;
 	
 	private Timer m_timer;
 	private boolean[] m_key;
@@ -88,9 +81,6 @@ public class Game extends JPanel {
 	
 	private boolean m_reset;
 	
-	private int m_numCols;
-	private int m_levelWidth;
-	
 	private int m_camX;
 	
 	private LinkedList<StationaryObject> m_stationaryobjects;
@@ -98,6 +88,8 @@ public class Game extends JPanel {
 	
 	private LinkedList<MovingObject> m_movingobjects;
 	private int m_movingCount;
+	
+	private World m_world;
 	
 	private Player m_player;
 	
@@ -113,10 +105,7 @@ public class Game extends JPanel {
 		m_movingCount++;
 	}
 	
-	private GameObject[][] m_map;
-	
 	public Game(String mapFile) {
-		m_mapFile = mapFile;
 		m_doexit = false;
 	    m_redraw = false;
 	    m_gameStarted = false;
@@ -124,30 +113,18 @@ public class Game extends JPanel {
 	    m_pause = false;
 	    m_reset = false;
 	    m_camX = 0;
-	    m_numCols = MAX_NUM_COLS;
+	    
 	    m_stationaryCount = 0;
 	    m_movingCount = 0;
-	    m_levelWidth = Game.MAX_LEVEL_WIDTH;
-	    m_numCols = Game.MAX_NUM_COLS;
-	    m_player = null;
 	    
 	    m_stationaryobjects = new LinkedList<StationaryObject>();
 	    m_movingobjects = new LinkedList<MovingObject>();
 	    
-	    // initialize map
-	    m_map = new GameObject[NUM_ROWS][];
-	    for (int r = 0; r < NUM_ROWS; r++) {
-	    	m_map[r] = new GameObject[m_numCols];
-	    	for (int c = 0; c < m_numCols; c++)
-	    		m_map[r][c] = null;
+	    m_world = new World(mapFile, this);
+	    if (m_player == null) {
+	    	System.out.println("Map file error:\nA player must be added.");
+			System.exit(0);
 	    }
-	    
-	    int a = parseMapFile();
-	    if (a == -1)
-	    	System.exit(0);
-	    
-	    m_levelWidth = a + TILE_WIDTH;
-	    m_numCols = m_levelWidth / TILE_WIDTH;
 	    
 	    m_key = new boolean[4];
 	    for (int k = 0; k < 4; k++)
@@ -255,11 +232,13 @@ public class Game extends JPanel {
 		m_timer.start();
 	}
 	
+	public void setPlayer(Player player) {
+		m_player = player;
+	}
+	
 	public void reset() {
 		m_reset = true;
-		
 		m_player = null;
-		
 		m_camX = 0;
 		
 		for (StationaryObject so : m_stationaryobjects) {
@@ -271,110 +250,79 @@ public class Game extends JPanel {
 		
 		m_stationaryCount = 0;
 		m_movingCount = 0;
-		
-		for (int r = 0; r < NUM_ROWS; r++)
-	    {
-	        m_map[r] = new GameObject[m_numCols];
-	        for (int c = 0; c < m_numCols; c++)
-	            m_map[r][c] = null;
-	    }
-
-	    parseMapFile();
 	}
 	
 	public boolean getKey(MyKeys key) {
 		return m_key[key.Value];
 	}
 	
-	public void setReset(boolean val) {
-		m_reset = val;
-	}
-	
-	public boolean inTileCol(int x) {
-		return (x % TILE_WIDTH == 0);
-	}
-	
-	public boolean inTileRow(int y) {
-		return (y % TILE_HEIGHT == 0);
-	}
-	
-	public boolean validRow(int r) {
-		return (r >= 0 && r < NUM_ROWS);
-	}
-	
-	public boolean validCol(int c) {
-		return (c >= 0 && c < m_numCols);
-	}
-	
-	public boolean validX(int x) {
-		return (x >= 0 && x < m_levelWidth);
-	}
-	
-	public boolean validY(int y) {
-		return (y >= 0 && y < SCREEN_HEIGHT);
-	}
-	
-	public final int getLevelWidth() {
-		return m_levelWidth;
-	}
-	
-	public final int getNumCols() {
-		return m_numCols;
-	}
-	
-	public final GameObject getMap(int r, int c) {
-		return m_map[r][c];
-	}
-	
-	public void setMap(int r, int c, GameObject go) {
-		m_map[r][c] = go;
+	public StationaryObject getLastStatObj() {
+		return m_stationaryobjects.getLast();
 	}
 	
 	private void getInput() {
-		m_player.doSomething();
-		
-		for (MovingObject mo : m_movingobjects) {
-			mo.doSomething();
+		if (m_player != null && !m_reset) {
+			m_player.doSomething();
 			
-			if (m_reset)
-				return;
+			for (MovingObject mo : m_movingobjects) {
+				mo.doSomething();
+				
+				if (m_reset)
+					return;
+			}
 		}
 	}
 	
 	public void paintComponent(Graphics g) {
 		if (m_gameStarted && !m_gameOver && !m_pause && !m_redraw) {
 			Image img = draw();
+			if (img == null) {
+				System.out.println(1);
+				return;
+			}
 			g.drawImage(img, 0, 0, this);
 		}
 		else if (!m_gameStarted) {
 			Image img = drawStartScreen();
+			if (img == null) {
+				System.out.println(2);
+				return;
+			}
 			g.drawImage(img, 0, 0, this);
 		}
 		else if (m_gameOver) {
 			Image img = drawGameOverScreen();
+			if (img == null) {
+				System.out.println(3);
+				return;
+			}
 			g.drawImage(img, 0, 0, this);
 		}
 	}
 	
 	private Image draw() {
-		BufferedImage buffImg = new BufferedImage(m_levelWidth, SCREEN_HEIGHT, BufferedImage.TYPE_INT_RGB);
+		if (m_player == null) {
+			return null;
+		}
+		
+		int lvlWidth = m_world.getLevelWidth();
+		
+		BufferedImage buffImg = new BufferedImage(lvlWidth, SCREEN_HEIGHT, BufferedImage.TYPE_INT_RGB);
 		Graphics g = buffImg.getGraphics();
 		
 		g.setColor(Color.BLACK);
-		g.fillRect(0, 0, m_levelWidth, SCREEN_HEIGHT);
+		g.fillRect(0, 0, lvlWidth, SCREEN_HEIGHT);
 		
 		// draw player
 	    int x1 = m_player.getX();
-	    //int x2 = x1 + (m_player.getWidth() * PLAYER_WIDTH);
 	    int y1 = m_player.getY();
-	    //int y2 = y1 + (m_player.getHeight() * PLAYER_HEIGHT);
 	    
 	    int playerX = x1;
 	    
 	    if (playerX <= SCREEN_WIDTH / 2)
 	    	;
-	    else if (playerX >= m_levelWidth - SCREEN_WIDTH / 2)
-	    	m_camX = m_levelWidth - SCREEN_WIDTH;
+	    else if (playerX >= lvlWidth - SCREEN_WIDTH / 2)
+	    	m_camX = lvlWidth - SCREEN_WIDTH;
 	    else
 	    	m_camX = playerX - SCREEN_WIDTH / 2;
 	    g.translate(-m_camX, 0);
@@ -433,101 +381,4 @@ public class Game extends JPanel {
 		
 		return buffImg;
 	}
-	
-	private int parseMapFile() {
-		try {
-			BufferedReader br = new BufferedReader(new FileReader(m_mapFile));
-			
-			int highest_x = 0;
-			
-			int lineNum = 1;
-			String line;
-			final String REGEX = ",";
-			
-			while ( (line = br.readLine()) != null ) {
-				char tile = '-';
-				int row = -1, col = -1, width = -1, height = -1;
-				
-				Pattern p = Pattern.compile(REGEX);
-				String[] vars = p.split(line);
-				
-				try {
-					tile = vars[0].charAt(0);
-					row = Integer.parseInt(vars[1]);
-					col = Integer.parseInt(vars[2]);
-					width = Integer.parseInt(vars[3]);
-					height = Integer.parseInt(vars[4]);
-				}
-				catch (Exception ex) {
-					System.out.println("Map file error:\nInvalid line at line: " + lineNum);
-	                System.exit(0);
-				}
-				
-				// create the gameobject
-				switch (tile) {
-				case 'w':
-		            addNewStationaryObject(new Wall(row, col, width, height, this, lineNum));
-		            break;
-		        case 'p':
-		        {
-		            if (m_player != null)
-		            {
-		                System.out.println("Map file error:\nCan only have one player. Extra player at line: " + lineNum);
-		                System.exit(0);
-		            }
-
-		            m_player = new Player(row, col, width, height, this, lineNum);
-		            break;
-		        }
-		        case 's':
-		            addNewStationaryObject(new StationaryEnemy(row, col, width, height, this, lineNum));
-		            break;
-		        case 'm':
-		            break;
-		        default:
-		        	System.out.println("Map file error:\nNot a valid tile char at line: " + lineNum);
-	                System.exit(0);
-				}
-				
-				if (tile == 'w' || tile == 's') {
-					StationaryObject last = m_stationaryobjects.getLast();
-					int last_x = last.getX();
-					if (last_x > highest_x)
-						highest_x = last_x;
-				}
-				
-				lineNum++;
-			}
-			
-			if (m_player == null) {
-				System.out.println("Map file error:\nA player must be added.");
-				System.exit(0);
-			}
-			
-			// remove chars in map for player
-		    int player_row = m_player.getR();
-		    int player_col = m_player.getC();
-		    for (int r = player_row; r < (player_row + m_player.getHeight()); r++)
-		    {
-		        for (int c = player_col; c < (player_col + m_player.getWidth()); c++)
-		            setMap(r, c, null);
-		    }
-
-		    // remove chars in map for movingobjects
-		    // not yet implemented because there are not movingobjects yet.
-
-
-		    br.close();
-
-		    return highest_x;
-		}
-		catch (FileNotFoundException ex) {
-			System.out.println("Could not open map file.");
-			return -1;
-		}
-		catch (IOException ex) {
-			System.out.println("IO exception");
-			return -1;
-		}
-	}
-}
+}	

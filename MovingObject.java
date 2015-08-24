@@ -1,7 +1,7 @@
 public abstract class MovingObject extends GameObject {
 
-	public MovingObject(int r, int c, char tile, int w, int h, Game g, int line) {
-		super(r, c, tile, w, h, g, line);
+	public MovingObject(int r, int c, char tile, int w, int h, World world, int line) {
+		super(r, c, tile, w, h, world, line);
 		
 		
 	}
