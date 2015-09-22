@@ -277,7 +277,6 @@ public class Game extends JPanel {
 		if (m_gameStarted && !m_gameOver && !m_pause && !m_redraw) {
 			Image img = draw();
 			if (img == null) {
-				System.out.println(1);
 				return;
 			}
 			g.drawImage(img, 0, 0, this);
@@ -285,7 +284,6 @@ public class Game extends JPanel {
 		else if (!m_gameStarted) {
 			Image img = drawStartScreen();
 			if (img == null) {
-				System.out.println(2);
 				return;
 			}
 			g.drawImage(img, 0, 0, this);
@@ -293,7 +291,6 @@ public class Game extends JPanel {
 		else if (m_gameOver) {
 			Image img = drawGameOverScreen();
 			if (img == null) {
-				System.out.println(3);
 				return;
 			}
 			g.drawImage(img, 0, 0, this);
