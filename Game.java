@@ -327,29 +327,65 @@ public class Game extends JPanel {
 	    g.setColor(Color.GREEN);
 	    g.fillRect(playerX, y1, PLAYER_WIDTH, PLAYER_HEIGHT);
 	    
-	    for (StationaryObject so : m_stationaryobjects) {
-	    	int width = so.getWidth() * TILE_WIDTH;
-	        int height = so.getHeight() * TILE_HEIGHT;
-	        x1 = so.getX();
-	        int x2 = x1 + width;
-	        y1 = so.getY();
+	    StatObjsDraw sod = (startPos, endPos) -> {
+	    	for (int i = startPos; i <= endPos; i++) {
+	    		int width = m_stationaryobjects.get(i).getWidth() * TILE_WIDTH;
+		        int height = m_stationaryobjects.get(i).getHeight() * TILE_HEIGHT;
+		        int x_1 = m_stationaryobjects.get(i).getX();
+		        int x_2 = x_1 + width;
+		        int y_1 = m_stationaryobjects.get(i).getY();
 
-	        if (x2 >= m_camX || x1 >= m_camX) {
-	            char tile = so.getTile();
-	            switch (tile) {
-	            case 'w':
-	            	g.setColor(Color.RED);
-	        		g.fillRect(x1, y1, width, height);
-	                break;
-	            case 's':
-	            	g.setColor(Color.YELLOW);
-	        		g.fillRect(x1, y1, width, height);
-	                break;
-	            }
-	        }
+		        if (x_2 >= m_camX || x_1 >= m_camX) {
+		            char tile = m_stationaryobjects.get(i).getTile();
+		            switch (tile) {
+		            case 'w':
+		            	g.setColor(Color.RED);
+		        		g.fillRect(x_1, y_1, width, height);
+		                break;
+		            case 's':
+		            	g.setColor(Color.YELLOW);
+		        		g.fillRect(x_1, y_1, width, height);
+		                break;
+		            }
+		        }
+	    	}
+	    };
+	    
+	    int t1_soStart = 0;
+	    int t1_soEnd = m_stationaryobjects.size() / 2;
+	    
+	    int t2_soStart = t1_soEnd + 1;
+	    int t2_soEnd = m_stationaryobjects.size() - 1;
+	    
+	    if (t2_soStart <= t2_soEnd) { // 2 threads can be created
+	    	Thread t1 = new Thread() {
+		    	public void run() {
+		    		sod.drawStatObjs(t1_soStart, t1_soEnd);
+		    	}
+		    };
+	    	Thread t2 = new Thread() {
+	    		public void run() {
+	    			sod.drawStatObjs(t2_soStart, t2_soEnd);
+	    		}
+	    	};
+	    	t1.start();
+	    	t2.start();
+	    	
+	    	try {
+	    		t1.join();
+	    		t2.join();
+	    	} catch (InterruptedException e) {
+	    		System.out.println("Main Thread interrupted.");
+	    	}
 	    }
+	    else // only 1 thread can be created
+	    	sod.drawStatObjs(t1_soStart, t2_soEnd);
 	    
 	    return buffImg;
+	}
+	
+	private interface StatObjsDraw {
+		void drawStatObjs(int startPos, int endPos);
 	}
 	
 	private final Image drawStartScreen() {
